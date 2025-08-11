@@ -31,78 +31,39 @@ function getTopKDocuments(queryEmbedding, documents, k = 5) {
   similarities.sort((a, b) => b.score - a.score);
   return similarities.slice(0, k).map(item => item.doc);
 }
-//upload YOUR OWN DOICUMENTS HERE
 async function loadDocuments() {
   const files = [
-    './documents/tour_details.json',
-    './documents/tours.json',
-    './documents/rest_countries.json',
-    './documents/unesco_sites.json',
-    './documents/merged_countries.json'
+    './documents/daily_14.json'
   ];
 
   const documents = [];
-//change to fit your documents
-  /*
+
   for (const file of files) {
     try {
       const content = await fs.readFile(file, 'utf-8');
       const json = JSON.parse(content);
 
-      if (file.includes('tour_details')) {
-        json.forEach(tour => {
-          const detailsSnippet = tour.details?.map(d => d.body).join(' ') || '';
-          documents.push({
-            id: `tour_details_${tour.name}`,
-            data: {
-              title: tour.name,
-              snippet: (tour.description || '') + ' ' + detailsSnippet
-            }
-          });
+      // The structure you pasted has json.city and json.data
+      const cityName = json.city?.name || 'Unknown City';
+      const countryCode = json.city?.country || '';
+
+      json.data.forEach(day => {
+        const date = new Date(day.dt * 1000).toLocaleDateString();
+        const weatherMain = day.weather?.[0]?.main || '';
+        const weatherDesc = day.weather?.[0]?.description || '';
+        const tempDay = day.temp?.day || '';
+        const tempMin = day.temp?.min || '';
+        const tempMax = day.temp?.max || '';
+
+        documents.push({
+          id: `weather_${cityName}_${date}`,
+          data: {
+            title: `${cityName}, ${countryCode} - ${date}`,
+            snippet: `Weather: ${weatherMain} (${weatherDesc}). Temp: ${tempDay}K (min ${tempMin}K, max ${tempMax}K). Humidity: ${day.humidity}%.`
+          }
         });
-      } else if (file.includes('tours')) {
-        json.forEach(tour => {
-          documents.push({
-            id: `tours_${tour.name}`,
-            data: {
-              title: tour.name,
-              snippet: tour.product_line || ''
-            }
-          });
-        });
-      } else if (file.includes('rest_countries')) {
-        json.forEach(country => {
-          const languageList = Object.values(country.languages || {}).join(', ');
-          documents.push({
-            id: `rest_countries_${country.name?.common}`,
-            data: {
-              title: country.name?.common || '',
-              snippet: `Official Name: ${country.name?.official}. Capital: ${country.capital?.[0] || ''}. Region: ${country.region}. Subregion: ${country.subregion}. Population: ${country.population}. Languages: ${languageList}. Area: ${country.area} sq km.`
-            }
-          });
-        });
-      } else if (file.includes('unesco_sites')) {
-        json.query?.row?.forEach(site => {
-          documents.push({
-            id: `unesco_sites_${site.site}`,
-            data: {
-              title: site.site || '',
-              snippet: site.short_description?.replace(/<[^>]+>/g, '') || ''
-            }
-          });
-        });
-      } else if (file.includes('merged_countries')) {
-        json.forEach(country => {
-          documents.push({
-            id: `merged_countries_${country.name}`,
-            data: {
-              title: country.name || '',
-              snippet: `Capital: ${country.capital}, Region: ${country.region}, Population: ${country.population}, Language: ${country.language}, Currency: ${country.currency}`
-            }
-          });
-        });
-      }
-*/
+      });
+
     } catch (err) {
       console.error(`Error reading ${file}:`, err);
     }
